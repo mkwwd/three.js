@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 
 // 기본 장면
 
@@ -58,30 +60,44 @@ export default function example() {
 
   const meshes = [];
   let mesh;
-  for (let i = 0; i < 10; i++) {
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.x = Math.random() * 5 - 2.5;
-    mesh.position.y = Math.random() * 5 - 2.5;
-    mesh.position.z = Math.random() * 5 - 2.5;
-    scene.add(mesh);
-    meshes.push(mesh);
-  }
+  // for (let i = 0; i < 10; i++) {
+  //   mesh = new THREE.Mesh(geometry, material);
+  //   mesh.position.x = Math.random() * 5 - 2.5;
+  //   mesh.position.y = Math.random() * 5 - 2.5;
+  //   mesh.position.z = Math.random() * 5 - 2.5;
+  //   scene.add(mesh);
+  //   meshes.push(mesh);
+  // }
+
+  // gitf loader
+  const gltfLoader = new GLTFLoader();
+  let mixer;
+
+  gltfLoader.load("/models/fish.glb", (gltf) => {
+    const fish = gltf.scene.children[0];
+    scene.add(fish);
+
+    mixer = new THREE.AnimationMixer(fish);
+    const actions = [];
+    actions[0] = mixer.clipAction(gltf.animations[0]);
+    actions[0].repetitions = 10;
+    actions[0].clampWhenFinished = true;
+    actions[0].play();
+  });
 
   // 그리기
-  let time = Date.now();
+  const clock = new THREE.Clock();
 
   function draw() {
-    const newTime = Date.now();
-    const deltaTime = newTime - time;
-    time = newTime;
-
-    meshes.forEach((item) => {
-      item.position.x += deltaTime * 0.001;
-    });
+    const delta = clock.getDelta();
+    if (mixer) mixer.update(delta);
+    // meshes.forEach((item) => {
+    //   item.position.x += deltaTime * 0.001;
+    // });
 
     renderer.render(scene, camera);
 
-    window.requestAnimationFrame(draw);
+    renderer.setAnimationLoop(draw);
   }
   renderer.render(scene, camera);
 
